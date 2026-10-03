@@ -1,0 +1,74 @@
+x-kev-api: &kev-api
+  ports:
+    - "127.0.0.1:${KEV_API_HOST_PORT:-8009}:8009"
+  volumes:
+    - kev-hf-cache:/cache/hf
+  environment:
+    HF_HOME: /cache/hf
+    HF_HUB_CACHE: /cache/hf/hub
+    KEV_RUN: ${KEV_RUN:-jaredpalmer/kev-9b}
+    KEV_API_KEY: ${KEV_API_KEY:-}
+    HF_TOKEN: ${HF_TOKEN:-}
+    KEV_TRUNCATE_STATES: ${KEV_TRUNCATE_STATES:-}
+    KEV_DTYPE: ${KEV_DTYPE:-}
+    KEV_BACKEND: ${KEV_BACKEND:-}
+    KEV_FUSED: ${KEV_FUSED:-}
+    KEV_CUDA_GRAPHS: ${KEV_CUDA_GRAPHS:-}
+    KEV_PREFIX_CACHE: ${KEV_PREFIX_CACHE:-4}
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8009/openapi.json')"]
+    interval: 15s
+    timeout: 10s
+    retries: 20
+    start_period: 30m   # First start model downloads may take a while (51 GB for 27B)
+  restart: unless-stopped
+
+services:
+  kev-api:
+    <<: *kev-api
+    profiles: [cpu]
+    build:
+      context: .
+    image: kev-api:local
+
+  kev-api-nvidia:
+    <<: *kev-api
+    profiles: [nvidia]
+    build:
+      context: .
+      args:
+        CUDA_KERNELS: 1
+    image: kev-api:nvidia
+    networks:
+      default:
+        aliases: [kev-api]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  playground:
+    profiles: [playground]
+    build:
+      context: ./playground
+    image: kev-playground:local
+    ports:
+      - "127.0.0.1:${PLAYGROUND_HOST_PORT:-3001}:3000"
+    environment:
+      KEV_API: http://kev-api:8009
+      NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
+    depends_on:
+      kev-api:
+        condition: service_healthy
+        required: false
+      kev-api-nvidia:
+        condition: service_healthy
+        required: false
+    restart: unless-stopped
+
+volumes:
+  kev-hf-cache:
+    name: kev-hf-cache

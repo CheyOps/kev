@@ -1,0 +1,36 @@
+# Keep local research artifacts and unrelated services out of the API build context.
+.git
+.gitignore
+.dockerignore
+.env*
+!.env.example
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Large/generated project data is mounted or downloaded at runtime.
+runs/
+cache/
+hf/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Not needed to build kev-api in docker.
+playground/
+docs/
+experiments/
+evals/
+scripts/
+skills/
+tests/
+modal_app.py
+space/
+tools/
+AGENTS.md
+PLAN.md

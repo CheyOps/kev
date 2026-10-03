@@ -119,6 +119,16 @@ Example response from Kev-4B, running in bf16 on an Apple M5:
 
 The ticket mentions a return, a late delivery and a billing problem, and the department probabilities say so. That's why Kev returns probabilities instead of a single label: your code can route the confident cases and send the rest to a person.
 
+### Docker
+
+Copy `.env.example` to `.env` and edit it according to your environment and your liking.  Then run:
+
+```bash
+docker compose up
+```
+
+The first run may take some time to download the model and pre-requisites. 
+
 ### Use It From Python
 
 If you already call Jev, point your client at Kev and keep the rest of your code. The TypeSafe SDK is included in `uv sync --extra serve`:
